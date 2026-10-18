@@ -1,3 +1,30 @@
+/* Page background. A fixed pseudo-element is used instead of
+   background-attachment: fixed, which iOS Safari doesn't support. */
+body::before {
+  content: "";
+  position: fixed;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  z-index: -1;
+  background: url("../resources/bg1.webp") center / cover no-repeat;
+}
+
+@media (max-width: 780px) {
+  #navbar img {
+    display: none;
+  }
+
+  #navbar .navbar-brand {
+    padding-left: 0;
+  }
+
+  #navbar .navbar-toggler {
+    margin-right: 0;
+  }
+}
+
 .fade-in-up {
     opacity: 0; /* set the element to be invisible initially */
     animation-name: fade-in-up;
@@ -5,7 +32,7 @@
     animation-timing-function: ease-out; /* adjust timing function as desired */
     animation-fill-mode: forwards; /* keep the element visible at the end of the animation */
   }
-  
+
   @keyframes fade-in-up {
     from {
       opacity: 0;
@@ -15,18 +42,11 @@
       opacity: 1;
       transform: translate3d(0, 0, 0); /* move the element back to its original position */
     }
-  }  
-  .your-section-class {
-    position: relative;
-}
-.your-section-class::before {
-    content: "";
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    z-index: -1;
-    background-color: rgba(0,0,0,0.5);
-    opacity: 0.5;
+  }
+
+@media (prefers-reduced-motion: reduce) {
+  .fade-in-up {
+    animation: none;
+    opacity: 1;
+  }
 }

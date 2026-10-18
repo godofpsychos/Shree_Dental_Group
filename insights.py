@@ -13,6 +13,8 @@ except FileNotFoundError:
 # Parse JSON data and create a DataFrame
 records = []
 for line in lines:
+    if not line.strip():
+        continue
     record = json.loads(line.strip())
     records.append(record)
 
