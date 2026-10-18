@@ -11,6 +11,26 @@ body::before {
   background: url("../resources/bg1.webp") center / cover no-repeat;
 }
 
+/* Carousel images carry width/height attributes (to avoid layout shift),
+   so the height must be released for them to scale with the width */
+#carouselExampleDark .carousel-item img {
+  height: auto;
+}
+
+/* At 1400x500 the banner is only ~115px tall on phones; give it a usable height */
+@media (max-width: 767.98px) {
+  #carouselExampleDark .carousel-item img {
+    height: 200px;
+    object-fit: cover;
+  }
+}
+
+@media (max-width: 400px) {
+  #navbar .navbar-brand {
+    font-size: 1rem;
+  }
+}
+
 @media (max-width: 780px) {
   #navbar img {
     display: none;
