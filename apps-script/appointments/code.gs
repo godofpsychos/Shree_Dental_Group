@@ -1,6 +1,6 @@
 // Google Apps Script for the APPOINTMENT sheet (Extensions > Apps Script).
 //
-// 1. Saves each booking sent from the website (doPost).
+// 1. Saves each booking sent from the website (doPost) and emails it to the clinic.
 // 2. Keeps Google Calendar "call these patients" reminders in sync with the sheet:
 //    the day before each appointment date, at that clinic's closing time
 //    (REMINDER_TIMES), one event per clinic pops up listing the name and phone
@@ -15,6 +15,10 @@
 
 var sheetName = 'Sheet1'
 var scriptProp = PropertiesService.getScriptProperties()
+
+// Where new website bookings are emailed (sent from the Google account that owns
+// this script). Leave empty ('') to turn the emails off.
+var NOTIFY_EMAIL = 'shreedentalclinicchimur@gmail.com'
 
 // ---- Call reminder settings -------------------------------------------------
 // Reminder time for each clinic on the day BEFORE the appointment (24-hour "HH:mm"),
@@ -37,8 +41,8 @@ function intialSetup () {
   scriptProp.setProperty('key', activeSpreadsheet.getId())
 }
 
-// Run ONCE from the editor after pasting this script: it asks for Calendar
-// permission, installs the triggers and creates reminders for existing bookings.
+// Run ONCE from the editor after pasting this script: it asks for Calendar and
+// email permission, installs the triggers and creates reminders for existing bookings.
 function setupReminders () {
   var ss = SpreadsheetApp.openById(scriptProp.getProperty('key'))
   ScriptApp.getProjectTriggers().forEach(function(t) {
@@ -87,8 +91,13 @@ function doPost (e) {
 
     sheet.getRange(nextRow, 1, 1, newRow.length).setValues([newRow])
 
-    // A calendar problem must never lose the booking, so it is caught separately
-    // and the website still gets "success".
+    // Email and calendar problems must never lose the booking, so they are caught
+    // separately and the website still gets "success".
+    try {
+      notifyClinic(e.parameter, doc.getUrl())
+    } catch (err) {
+      console.error('Notification email failed: ' + err)
+    }
     try {
       syncReminders()
     } catch (err) {
@@ -109,6 +118,59 @@ function doPost (e) {
   finally {
     lock.releaseLock()
   }
+}
+
+// Emails the clinic the details of a new website booking.
+function notifyClinic (p, sheetUrl) {
+  if (!NOTIFY_EMAIL) return
+  var day = formatBookingDate(p.Date)
+  var fields = [
+    ['Name', p.Name], ['Phone', p.Phone], ['Clinic', p.Clinic],
+    ['Date', day || p.Date], ['Email', p.Email]
+  ].filter(function(f) { return f[1] })
+
+  var subject = oneLine('New appointment: ' + (p.Name || 'Unknown') +
+    (p.Clinic ? ' - ' + p.Clinic : '') + (day ? ', ' + day : ''))
+  var text = 'New appointment request from the website:\n\n' +
+    fields.map(function(f) { return f[0] + ': ' + f[1] }).join('\n') +
+    '\n\nAppointments sheet: ' + sheetUrl
+  var html = '<p>New appointment request from the website:</p>' + fieldsTable(fields) +
+    '<p><a href="' + sheetUrl + '">Open the appointments sheet</a></p>'
+
+  var options = { name: 'Shree Dental Website', htmlBody: html }
+  if (/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(p.Email || '')) options.replyTo = p.Email
+  MailApp.sendEmail(NOTIFY_EMAIL, subject, text, options)
+}
+
+// Run from the editor to check the email arrives (also asks for email permission).
+function testNotificationEmail () {
+  notifyClinic({ Name: 'TEST patient', Phone: '9876543210', Clinic: 'Chimur', Date: '2026-12-01' },
+    SpreadsheetApp.openById(scriptProp.getProperty('key')).getUrl())
+  console.log('Test email sent to ' + NOTIFY_EMAIL)
+}
+
+function fieldsTable (fields) {
+  return '<table cellpadding="6" style="border-collapse:collapse">' + fields.map(function(f) {
+    var value = escapeHtml(f[1])
+    if (f[0] === 'Phone') value = '<a href="tel:' + escapeHtml(String(f[1]).replace(/[^\d+]/g, '')) + '">' + value + '</a>'
+    return '<tr><td style="color:#64748b">' + f[0] + '</td><td><b>' + value + '</b></td></tr>'
+  }).join('') + '</table>'
+}
+
+// "2026-10-20" -> "Tue 20 Oct 2026"
+function formatBookingDate (value) {
+  var m = String(value || '').match(/^(\d{4})-(\d{1,2})-(\d{1,2})$/)
+  if (!m) return ''
+  var d = new Date(Number(m[1]), Number(m[2]) - 1, Number(m[3]))
+  return Utilities.formatDate(d, Session.getScriptTimeZone(), 'EEE d MMM yyyy')
+}
+
+function escapeHtml (value) {
+  return String(value).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;')
+}
+
+function oneLine (value) {
+  return String(value).replace(/\s+/g, ' ').trim()
 }
 
 // Makes the calendar match the sheet for every upcoming appointment date.

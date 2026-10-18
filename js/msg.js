@@ -1,18 +1,9 @@
-const SECURE_TOKEN = "869f282d-b735-4c97-95e6-a3d300869d3c";
-const MAIL_TO = 'shreedentalclinicchimur@gmail.com';
-const MAIL_FROM = "tarunpal13982@gmail.com";
-
+// Each form posts to its Google Sheet's Apps Script, which saves the row and
+// emails the clinic (see apps-script/).
 const cscriptURL = 'https://script.google.com/macros/s/AKfycbxF4n6ZhGXh2M3TyojJ6QNOkvxp0VvyRifwkWhpz9mSx2VynHgfTyEmVvLLIfD_2yh_/exec';
 const ascriptURL = 'https://script.google.com/macros/s/AKfycbxlqktA9WM15sPor6yeOihbc0z6BkjfikjnDt74zd56FjoGITswr3rkEQvWK4GogWQOEw/exec';
 
 const ERROR_MSG = "Sorry, something went wrong. Please try again or call us at 93403 89430.";
-
-// Prevent user input from injecting HTML into the notification email
-function esc(value) {
-    const d = document.createElement('div');
-    d.textContent = value;
-    return d.innerHTML;
-}
 
 function showStatus(form, type, text) {
     const status = form.querySelector('.form-status');
@@ -20,7 +11,7 @@ function showStatus(form, type, text) {
     status.textContent = text;
 }
 
-function handleForm(form, { url, subject, heading, fields, success, validate }) {
+function handleForm(form, { url, success, validate }) {
     const button = form.querySelector('button[type="submit"]');
     const label = button.textContent;
 
@@ -40,21 +31,6 @@ function handleForm(form, { url, subject, heading, fields, success, validate }) 
         button.textContent = 'Sending...';
         form.querySelector('.form-status').className = 'form-status';
         form.querySelector('.form-status').textContent = '';
-
-        const body = (heading ? heading + '<br>' : '') +
-            fields.map(([name, id]) => `<b>${name}:</b> ${esc(document.getElementById(id).value || '-')}<br>`).join('');
-        const name = document.getElementById(fields[0][1]).value;
-
-        // Email is a best-effort notification; the Google Sheet submission is the source of truth
-        if (typeof Email !== 'undefined') {
-            Email.send({
-                SecureToken: SECURE_TOKEN,
-                To: MAIL_TO,
-                From: MAIL_FROM,
-                Subject: subject + name,
-                Body: body
-            });
-        }
 
         fetch(url, { method: 'POST', body: new FormData(form) })
             .then(async (res) => {
@@ -119,16 +95,11 @@ aform.onAfterReset = updateClinicHint;
 
 handleForm(aform, {
     url: ascriptURL,
-    subject: "New Appointment of ",
-    heading: "Book an appointment:",
-    fields: [['Name', 'aname'], ['Phone', 'aphone'], ['Clinic', 'aclinic'], ['Date', 'adate'], ['Email', 'aemail']],
     success: "Thank you! Your appointment request has been received. We will call you soon to confirm the time.",
     validate: validateAppointmentDate
 });
 
 handleForm(document.getElementById('contact-form'), {
     url: cscriptURL,
-    subject: "New query/feedback from ",
-    fields: [['Name', 'cname'], ['Phone', 'cphone'], ['Email', 'cemail'], ['Feedback', 'cfeedback']],
     success: "Thank you for contacting us! We will get back to you soon."
 });
