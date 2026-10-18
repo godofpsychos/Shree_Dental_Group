@@ -1,4 +1,4 @@
 User-agent: *
 Allow: /
 
-Sitemap: https://godofpsychos.github.io/Shree_Dental_Group/sitemap.xml
+Sitemap: https://shreedentalgroup.in/sitemap.xml
