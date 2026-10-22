@@ -1,7 +1,7 @@
 // Each form posts to its Google Sheet's Apps Script, which saves the row and
 // emails the clinic (see apps-script/).
-const cscriptURL = 'https://script.google.com/macros/s/AKfycbxF4n6ZhGXh2M3TyojJ6QNOkvxp0VvyRifwkWhpz9mSx2VynHgfTyEmVvLLIfD_2yh_/exec';
-const ascriptURL = 'https://script.google.com/macros/s/AKfycbxlqktA9WM15sPor6yeOihbc0z6BkjfikjnDt74zd56FjoGITswr3rkEQvWK4GogWQOEw/exec';
+const cscriptURL = 'https://script.google.com/macros/s/AKfycbxCixNDL3LR2zATsO9vXU4zJ5UI_FoZwhTkOOJzs9q-FMGkNWOcobWG5aLzOgOA6WkE/exec';
+const ascriptURL = 'https://script.google.com/macros/s/AKfycbxPogzgvjeunhIr2RcGyIO1LA9YeZ_smPMmou9RpZiKalOnGzOqlqJlrIDqbYN1qEn9Jg/exec';
 
 const ERROR_MSG = "Sorry, something went wrong. Please try again or call us at 93403 89430.";
 
